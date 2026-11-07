@@ -1,0 +1,9 @@
+/* Nessafy's look. */
+
+:root {
+    --nf-serif: "Nessafy Serif", georgia, serif;
+}
+
+body {
+    background: #000 var(--nessafy-lace) 0 0 / var(--nessafy-lace-size) repeat !important;
+}
