@@ -66,17 +66,60 @@ body {
         var(--nf-panel) !important;
 }
 
-/* Spotify tints headers with colours taken from the cover art, through variables set inline. Nessafy keeps
-   them neutral, so the lace and the photo stay the only colour behind the content. */
-#main-view [style*="--background-base:"],
-.Root__top-container > :has(#Desktop_PanelContainer_Id) [style*="--background-base:"] {
-    --background-base: rgb(255 255 255 / 4%) !important;
-    --background-base-min-contrast: rgb(255 255 255 / 6%) !important;
-    --background-highlight: rgb(255 255 255 / 9%) !important;
-    --background-press: rgb(255 255 255 / 3%) !important;
-    --background-elevated-base: rgb(255 255 255 / 7%) !important;
-    --background-elevated-highlight: rgb(255 255 255 / 11%) !important;
-    --background-elevated-press: rgb(255 255 255 / 5%) !important;
+/* ── Page headers ──────────────────────────────────────────────────────────────────────────── */
+
+/* Playlist, album and Liked Songs pages take a colour from the cover. Spotify paints it as two blocks, one
+   behind the title and one behind the play button, each fading into its own solid background, which leaves
+   hard edges over the lace. Nessafy paints both in the plain colour and fades them with one continuous
+   mask: strongest behind the title, gone below the play button. Newer pages pass the colour as an inline
+   variable, older ones as an inline background colour. */
+:root {
+    --nf-header-top: 0.6;
+    --nf-header-seam: 0.34;
+}
+
+[data-testid="entity-header"] > [style*="--background-base:"],
+[data-testid="entity-header"] + [style*="--background-base:"],
+[data-testid="entity-header"] + * > [style*="--background-base:"]:first-child {
+    background: var(--background-base) !important;
+}
+
+[data-testid="entity-header"] > [style*="background-color"],
+[data-testid="entity-header"] + [style*="background-color"] {
+    background-image: none !important;
+}
+
+/* The older pages' darkening overlay over the header colour. */
+[data-testid="entity-header"] > [style*="background-color"] + :not(.main-entityHeader-contentWrapper) {
+    display: none;
+}
+
+[data-testid="entity-header"] > [style*="--background-base:"],
+[data-testid="entity-header"] > [style*="background-color"] {
+    mask-image: linear-gradient(rgb(0 0 0 / var(--nf-header-top)), rgb(0 0 0 / var(--nf-header-seam)));
+}
+
+[data-testid="entity-header"] + [style*="--background-base:"],
+[data-testid="entity-header"] + * > [style*="--background-base:"]:first-child,
+[data-testid="entity-header"] + [style*="background-color"] {
+    mask-image: linear-gradient(rgb(0 0 0 / var(--nf-header-seam)), transparent);
+}
+
+/* Artist pages put the artist's colour on a layer that stays behind the whole view (it's only meant to show
+   when you scroll past the top), which would tint everything below the photo. */
+#main-view [data-testid="overscroll-background"] {
+    background: transparent !important;
+}
+
+/* The artist photo stays put while the page scrolls over it, and Spotify relies on the page's solid
+   background to hide its bottom edge. Fading it out keeps that edge soft over the lace. */
+#main-view .before-scroll-node > :has(> [data-testid="background-image"]) {
+    mask-image: linear-gradient(black 45%, transparent);
+}
+
+/* Below the artist photo there's no coloured title block to continue from, so the colour strip goes. */
+[data-testid="artist-page"] [data-testid="entity-header"] + * > [style*="--background-base:"]:first-child {
+    display: none;
 }
 
 /* The home page's header, painted with an inline colour from your listening. */
