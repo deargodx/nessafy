@@ -105,15 +105,67 @@ namespace Nessafy.Installer
             return File.Exists(storeAlias) ? SpotifyKind.Store : SpotifyKind.Missing;
         }
 
-        static void RequireDesktopSpotify(InstallOptions options)
+        /// Spicetify only themes Spotify from spotify.com. If that isn't installed, this installs it, after
+        /// uninstalling the Microsoft Store version if that's there.
+        static void EnsureDesktopSpotify(InstallOptions options, Action<string> log)
         {
-            switch (FindSpotify(options.SpotifyDir))
+            SpotifyKind kind = FindSpotify(options.SpotifyDir);
+            if (kind == SpotifyKind.Desktop) return;
+            if (!string.Equals(options.SpotifyDir, DefaultSpotifyDir, StringComparison.OrdinalIgnoreCase))
+                throw new InvalidOperationException("There's no Spotify in " + options.SpotifyDir + ".");
+
+            if (kind == SpotifyKind.Store)
             {
-                case SpotifyKind.Store:
-                    throw new InvalidOperationException("This is Spotify from the Microsoft Store, which Spicetify can't theme. Uninstall it, install Spotify from spotify.com/download, then run this again.");
-                case SpotifyKind.Missing:
-                    throw new InvalidOperationException("Spotify isn't installed. Install it from spotify.com/download, then run this again.");
+                log("Uninstalling Spotify from the Microsoft Store");
+                foreach (Process process in Process.GetProcessesByName("Spotify"))
+                {
+                    try
+                    {
+                        if (process.MainModule.FileName.IndexOf(@"\WindowsApps\", StringComparison.OrdinalIgnoreCase) >= 0) process.Kill();
+                    }
+                    catch
+                    {
+                        // Already closed.
+                    }
+                }
+                int code = RunHidden("powershell.exe", "-NoProfile -NonInteractive -Command \"Get-AppxPackage SpotifyAB.SpotifyMusic | Remove-AppxPackage -ErrorAction Stop\"");
+                if (code != 0)
+                    throw new InvalidOperationException("Windows couldn't uninstall Spotify from the Microsoft Store. Uninstall it in Settings > Apps > Installed apps, then choose Install again.");
             }
+
+            log("Downloading Spotify from spotify.com");
+            string setup = Path.Combine(Path.GetTempPath(), "SpotifySetup.exe");
+            File.WriteAllBytes(setup, Http.Get("https://download.scdn.co/SpotifySetup.exe"));
+            try
+            {
+                // The setup downloads the rest of Spotify, so this can take a minute.
+                log("Installing Spotify");
+                using (Process process = Process.Start(new ProcessStartInfo(setup, "/silent") { UseShellExecute = true }))
+                    process.WaitForExit();
+            }
+            finally
+            {
+                try { File.Delete(setup); } catch { }
+            }
+
+            string exe = Path.Combine(DefaultSpotifyDir, "Spotify.exe");
+            if (!WaitFor(() => File.Exists(exe), 120))
+                throw new InvalidOperationException("Spotify didn't finish installing. Install it from spotify.com/download, then choose Install again.");
+
+            // Spicetify needs the settings file Spotify writes the first time it opens.
+            if (!File.Exists(Path.Combine(DefaultSpotifyDir, "prefs")))
+            {
+                if (SpotifyProcesses(DefaultSpotifyDir).Count == 0)
+                    Process.Start(new ProcessStartInfo(exe) { UseShellExecute = true });
+                WaitFor(() => File.Exists(Path.Combine(DefaultSpotifyDir, "prefs")), 60);
+            }
+            log("Spotify is installed. Log in to it when it opens");
+        }
+
+        static bool WaitFor(Func<bool> done, int seconds)
+        {
+            for (int i = 0; i < seconds && !done(); i++) Thread.Sleep(1000);
+            return done();
         }
 
         /// Spicetify has unpacked and patched Spotify's interface. A Spotify update puts the packed xpui.spa back.
@@ -127,7 +179,7 @@ namespace Nessafy.Installer
 
         public static void Install(InstallOptions options, Action<string> log)
         {
-            RequireDesktopSpotify(options);
+            EnsureDesktopSpotify(options, log);
             State state = LoadState(options.DataDir);
 
             string exe = Spicetify.FindExe() ?? Spicetify.Install(log);

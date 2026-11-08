@@ -97,7 +97,7 @@ namespace Nessafy.Installer
                 {
                     case "status":
                         Status status = Installer.ReadStatus(options);
-                        write("Spotify: " + (status.Spotify == SpotifyKind.Desktop ? status.SpotifyVersion : status.Spotify == SpotifyKind.Store ? "Microsoft Store version (not supported)" : "not installed"));
+                        write("Spotify: " + (status.Spotify == SpotifyKind.Desktop ? status.SpotifyVersion : status.Spotify == SpotifyKind.Store ? "Microsoft Store version (--install swaps it for spotify.com's)" : "not installed (--install gets it from spotify.com)"));
                         write("Spicetify: " + (status.SpicetifyVersion ?? "not installed"));
                         write("Theme: " + (string.IsNullOrEmpty(status.CurrentTheme) ? "none" : status.CurrentTheme));
                         write("Nessafy: " + (status.Installed ? "installed" + (status.KeepAfterUpdates ? ", kept on after Spotify updates" : "") : "not installed"));

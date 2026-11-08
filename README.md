@@ -18,7 +18,7 @@ Spotify in black and lace. A [Spicetify](https://spicetify.app) theme with a one
 
 ## Install
 
-1. You need Windows 10 or 11 and Spotify from [spotify.com/download](https://www.spotify.com/download). The Microsoft Store version can't be themed.
+1. You need Windows 10 or 11. Spicetify can only theme Spotify from [spotify.com/download](https://www.spotify.com/download), so if you don't have that, the installer gets it for you. If you have Spotify from the Microsoft Store, it asks first, then swaps it for the spotify.com version. Your playlists and library stay, but you'll log in again and re-download songs saved for offline listening.
 2. Download **[NessafyInstaller.exe](https://github.com/deargodx/nessafy/releases/latest/download/NessafyInstaller.exe)** and run it. It isn't code-signed, so Windows may say it "protected your PC". Choose **More info**, then **Run anyway**.
 3. Choose **Install**. Spotify restarts with Nessafy.
 

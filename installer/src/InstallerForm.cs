@@ -102,7 +102,7 @@ namespace Nessafy.Installer
             });
 
             ShowStatus(Installer.ReadStatus(options));
-            if (status.Spotify == SpotifyKind.Desktop && !status.Installed) logBox.Text = "Choose Install to put Nessafy into Spotify.";
+            if (!status.Installed) logBox.Text = "Choose Install to put Nessafy into Spotify.";
         }
 
         protected override void OnHandleCreated(EventArgs e)
@@ -156,8 +156,8 @@ namespace Nessafy.Installer
             switch (status.Spotify)
             {
                 case SpotifyKind.Desktop: spotifyValue.Text = status.SpotifyVersion; break;
-                case SpotifyKind.Store: spotifyValue.Text = "Microsoft Store version. Install Spotify from spotify.com instead."; break;
-                default: spotifyValue.Text = "Not installed. Get it from spotify.com/download first."; break;
+                case SpotifyKind.Store: spotifyValue.Text = "Microsoft Store version. Install swaps it for spotify.com's."; break;
+                default: spotifyValue.Text = "Not installed yet. Install gets it from spotify.com."; break;
             }
             spicetifyValue.Text = status.SpicetifyVersion ?? "Not installed yet. Install adds it.";
 
@@ -168,7 +168,7 @@ namespace Nessafy.Installer
 
             if (status.Installed) keepBox.Checked = status.KeepAfterUpdates;
             installButton.Text = status.Installed ? "Update / Repair" : "Install";
-            installButton.Enabled = status.Spotify == SpotifyKind.Desktop;
+            installButton.Enabled = true;
             uninstallButton.Visible = status.Installed;
             uninstallButton.Enabled = true;
             keepBox.Enabled = true;
@@ -186,6 +186,13 @@ namespace Nessafy.Installer
 
         void Run(bool install)
         {
+            if (install && status.Spotify == SpotifyKind.Store &&
+                MessageBox.Show(this,
+                    "Spicetify can't theme Spotify from the Microsoft Store, so Nessafy will uninstall it and install Spotify from spotify.com instead.\n\n" +
+                    "Your playlists and library stay, they're in your account. You'll need to log in again, and songs downloaded for offline listening need downloading again.",
+                    Text, MessageBoxButtons.OKCancel, MessageBoxIcon.Information) != DialogResult.OK)
+                return;
+
             if (Installer.IsSpotifyRunning(options) && !options.NoRestart &&
                 MessageBox.Show(this, "Spotify will be closed and opened again.", Text, MessageBoxButtons.OKCancel, MessageBoxIcon.Information) != DialogResult.OK)
                 return;
