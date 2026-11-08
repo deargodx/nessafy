@@ -1,0 +1,63 @@
+name: Release
+on:
+    push:
+        branches:
+            - main
+        paths:
+            - .github/workflows/release.yml
+            - theme/**
+            - installer/**
+            - scripts/**
+    workflow_dispatch:
+env:
+    FORCE_COLOR: true
+permissions:
+    contents: write
+concurrency:
+    group: release
+    cancel-in-progress: false
+
+# One release, replaced on every build. The installer's background check downloads the theme from it
+# (checking SHA256SUMS) when the last word of its title differs from the installed theme's version.
+jobs:
+    Release:
+        runs-on: windows-latest
+        defaults:
+            run:
+                shell: bash
+
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+            - name: Use Node.js
+              uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+              with:
+                  node-version: 24
+
+            - name: Build
+              run: |
+                  echo "NESSAFY_HASH=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+                  export NESSAFY_HASH=$(git rev-parse --short HEAD)
+                  node scripts/build.mjs
+
+            - name: Collect files and checksums
+              run: |
+                  mkdir release
+                  cp dist/Nessafy/* dist/NessafyInstaller.exe release/
+                  cd release
+                  sha256sum * > SHA256SUMS
+
+            - name: Publish
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              run: |
+                  files=$(ls -d release/*)
+                  if gh release view build > /dev/null 2>&1; then
+                      git push --force origin HEAD:refs/tags/build
+                      gh release upload build $files --clobber
+                      gh release edit build --title "Nessafy $NESSAFY_HASH"
+                  else
+                      gh release create build $files --target "$GITHUB_SHA" --latest --title "Nessafy $NESSAFY_HASH" \
+                          --notes "Download **NessafyInstaller.exe** and run it. Nessafy keeps itself up to date after that."
+                  fi

@@ -1,9 +1,153 @@
-/* Nessafy's look. */
+/* Nessafy's look. Spotify's class names are hashes that change between Spotify versions, so this sticks to
+   ids, test ids, Spotify's grid areas, its colour and font variables, and the readable class names
+   Spicetify maps (main-*, Root__*). */
+
+/* ── Palette and type ──────────────────────────────────────────────────────────────────────── */
 
 :root {
-    --nf-serif: "Nessafy Serif", georgia, serif;
+    --nf-panel: rgb(2 2 2 / 66%);
+    --nf-line: rgb(255 255 255 / 9%);
+    --nf-line-strong: rgb(255 255 255 / 16%);
+    --nf-text: #f1f0ee;
+    --nf-muted: #8c8c8c;
+    --nf-radius: 14px;
+    --nf-gap: 8px;
+    --nf-fallback: SpotifyMixUI, SpotifyMixUI-Arab, SpotifyMixUI-Cyrl, SpotifyMixUI-Grek, SpotifyMixUI-Hebr,
+        SpotifyMixUI-Thai, DevanagariFallback, "Helvetica Neue", helvetica, arial, "Hiragino Sans",
+        "Hiragino Kaku Gothic ProN", meiryo, "MS Gothic", "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji";
 }
+
+/* The serif covers Latin text; everything else falls through to Spotify's own fonts. Spotify sets these
+   with !important inside its "fonts" layer, which outranks any unlayered rule, so this goes in the same
+   layer with a stronger selector. */
+@layer fonts {
+    :root:root {
+        --encore-body-font-stack: "Nessafy Serif", var(--nf-fallback) !important;
+        --encore-title-font-stack: "Nessafy Serif", var(--nf-fallback) !important;
+        --encore-variable-font-stack: "Nessafy Serif", var(--nf-fallback) !important;
+    }
+}
+
+/* ── Frame: lace behind three rounded panels ───────────────────────────────────────────────── */
 
 body {
     background: #000 var(--nessafy-lace) 0 0 / var(--nessafy-lace-size) repeat !important;
+}
+
+.Root__top-container,
+#global-nav-bar,
+.Root__top-container > :has(> [data-testid="now-playing-bar"]) {
+    background: transparent !important;
+}
+
+/* Inside a panel, Spotify's base background is see-through, so the lace shows through the panel. */
+#Desktop_LeftSidebar_Id,
+#main-view,
+.Root__top-container > :has(#Desktop_PanelContainer_Id) {
+    --background-base: transparent;
+    --spice-main: transparent;
+}
+
+#Desktop_LeftSidebar_Id,
+#main-view,
+.Root__top-container > :has(#Desktop_PanelContainer_Id) > :has(#Desktop_PanelContainer_Id) {
+    background-color: var(--nf-panel) !important;
+    border: 1px solid var(--nf-line);
+    border-radius: var(--nf-radius) !important;
+    overflow: hidden;
+}
+
+/* The photo behind the main view, fading into the dark towards the content. */
+#main-view {
+    background:
+        linear-gradient(90deg, rgb(2 2 2 / 96%) 25%, rgb(2 2 2 / 72%) 55%, rgb(2 2 2 / 18%) 100%),
+        linear-gradient(0deg, rgb(2 2 2 / 90%) 0%, transparent 22%),
+        var(--nessafy-photo) right center / auto 100% no-repeat,
+        var(--nf-panel) !important;
+}
+
+/* Spotify tints headers with colours taken from the cover art, through variables set inline. Nessafy keeps
+   them neutral, so the lace and the photo stay the only colour behind the content. */
+#main-view [style*="--background-base:"],
+.Root__top-container > :has(#Desktop_PanelContainer_Id) [style*="--background-base:"] {
+    --background-base: rgb(255 255 255 / 4%) !important;
+    --background-base-min-contrast: rgb(255 255 255 / 6%) !important;
+    --background-highlight: rgb(255 255 255 / 9%) !important;
+    --background-press: rgb(255 255 255 / 3%) !important;
+    --background-elevated-base: rgb(255 255 255 / 7%) !important;
+    --background-elevated-highlight: rgb(255 255 255 / 11%) !important;
+    --background-elevated-press: rgb(255 255 255 / 5%) !important;
+}
+
+/* The home page's header, painted with an inline colour from your listening. */
+#main-view :has(> .main-gridContainer-home) > [style*="background-color"] {
+    background: linear-gradient(rgb(255 255 255 / 5%), transparent) !important;
+}
+
+/* Spotify's "now playing" equaliser is a green GIF. */
+img[src*="equaliser"] {
+    filter: grayscale(1) brightness(1.8);
+}
+
+/* The bar that fades in at the top of the main view once you scroll. */
+#main-view .main-topBar-background {
+    --background-base: rgb(8 8 8 / 92%) !important;
+    backdrop-filter: blur(12px);
+}
+
+/* ── Top bar ───────────────────────────────────────────────────────────────────────────────── */
+
+/* The Nessafy mark and name take the empty slot to the left of the back and forward arrows. */
+.main-globalNav-historyButtonsWrapper > :empty:first-child {
+    display: none;
+}
+
+.main-globalNav-historyButtonsWrapper::before {
+    content: "Nessafy";
+    display: flex;
+    align-items: center;
+    height: 48px;
+    margin: 0 10px 0 12px;
+    padding-left: 44px;
+    background: var(--nessafy-mark) left center / 38px 38px no-repeat;
+    color: var(--nf-text);
+    font: 600 22px/1 "Nessafy Serif", georgia, serif;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+}
+
+/* ── Bottom bar ────────────────────────────────────────────────────────────────────────────── */
+
+/* "Playing on <device>", which Spotify paints in its loud accent colour. */
+[data-testid="now-playing-bar"] > .encore-bright-accent-set {
+    margin: 0 8px 8px;
+    border: 1px solid var(--nf-line);
+    border-radius: 10px;
+    background: var(--nf-panel) !important;
+    color: var(--nf-text) !important;
+}
+
+[data-testid="now-playing-bar"] > .encore-bright-accent-set * {
+    color: inherit !important;
+    fill: currentcolor;
+}
+
+/* ── Type details ──────────────────────────────────────────────────────────────────────────── */
+
+/* Cormorant's default figures are old-style, which reads oddly in track numbers, times and dates. This uses
+   the feature setting rather than font-variant-numeric, so Spotify's tabular figures still apply on top. */
+body,
+body * {
+    font-feature-settings: "lnum";
+}
+
+/* ── Right panel ───────────────────────────────────────────────────────────────────────────── */
+
+/* The lyrics preview takes its colours from the cover art as well. */
+[style*="--lyrics-color-background"] {
+    --lyrics-color-background: rgb(255 255 255 / 6%) !important;
+    --lyrics-color-active: var(--nf-text) !important;
+    --lyrics-color-inactive: var(--nf-muted) !important;
+    --lyrics-color-passed: var(--nf-text) !important;
+    border: 1px solid var(--nf-line);
 }
